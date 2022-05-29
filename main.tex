@@ -115,5 +115,18 @@ cpufreq-set -c 0 -f 1000MHz
 \end{verbatim}
 
 \section{Manipulating network interface bandwidth}
+\label{sec:app-net}
+
+We use the \code{wondershaper} utility to constrain our network interfaces to a certain network bandwidth. Before using \code{wondershaper}, we first need to find the network interface that we are interested in using the Linux utility \code{ifconfig}. Then we need to clear any previous setting on the network interface, for example, \code{eno1d1}, by executing the command as shown below.
+\begin{verbatim}
+sudo wondershaper clear eno1d1
+\end{verbatim}
+\\
+Now, we can go ahead and set the upload and download bandwidth on the network interface using a command similar to the one shown below.
+\begin{verbatim}
+sudo wondershaper eno1d1 5120000 5120000
+\end{verbatim}
+\\
+In this case, we constrain both the upload and download bandwidth on \code{eno1d1} to $5$ Gbps.
 
 \end{document}
