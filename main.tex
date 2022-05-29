@@ -87,10 +87,10 @@ network interface. These bare-metal servers are codenamed
 One of the goals of this paper is to find out the minimum amount of processing capability required per storage server CPU to be able to generate the same performance as a fast client side CPU can provide. We take Skyhook as our computational storage system and execute queries to select $1$\% of the rows both on the client and the server side. We use the ~\code{cpufrequtils} toolchain provided by Linux to change the CPU speed on the storage servers. We discuss how to use this tool in detail in Appendix~\ref{sec:app-cpu}. Since the lowest frequency that we can set our cores at was $800$ MHz, we performed our experiments in the frequency range of $800$ MHz and $2000$ MHz. We repeated this experiment on a Skyhook cluster of $1$, $8$, and $16$ storage servers respectively to find out how much CPU one can save per server by scaling out. We performed weak scaling by increasing our dataset size slowly from $460$ to $920$ files as we scaled out from $8$ to $16$ storage servers. Our dataset was comprised of replicated $64$MB uncompressed Parquet files containing data from the infamous NYC taxi dataset. Each file consisted of $2.6$ million rows and $17$ columns. For every cluster size, we start with a client side query execution with both the client and server side CPUs at $2000$ MHz. Then we perform a storage side query execution with both the sides still at $2000$ MHz. After that we slowly tune down the storage side CPU frequencies by a difference of $200$ MHz at each step and perform storage side query executions for each step. We repeat this till we find the query performance to match the client side query execution at $2000$ MHz on both sides. We observe that in a single server Skyhook cluster, we cannot use a low power CPU on the storage because there is only a single storage layer CPU to match the client CPU, so both their frequencies should be the same. On the other hand, when we have a cluster with $8$ and $16$ servers respectively, we can tune down the CPU frequencies to $1200$ MHz and $800$ MHz respectively and still get similar or better performance. Ideally, for the $16$ server cases, we should have been fine running the storage server CPUs at $600$ MHz but the kernel only allowed us to tune down the CPUs till $800$ MHz. Figure~\ref{fig:cpu} shows our observations for this experiment.
 
 \subsection{Network Bandwidth}
-
-
+We performed an experiment to find out if offloading compute with Skyhook allows using a network with less bandwidth. We used a setup with $8$ storage nodes and a dataset of $460$ Parquet files similar to the CPU experiment above and performed $1$\% row selectivity experiments. We used the \code{wondershaper} Linux utility to constrain bandwidth at the network interfaces of the client and storage servers. Appendix ~\ref{sec:app-net} shows how to use the \code{wondershaper} utility. We start with a client side query execution with all interfaces at $10$ Gbps, then we do a server side execution, and then we constrain the network interfaces on both sides to $5$ Gbps and perform a server side execution again.
 
 \subsection{Cost}
+
 
 \section{Conclusion and Future Work}
 \label{sec:future-and-concl}
@@ -113,5 +113,7 @@ If there is no \code{userspace} governor enabled, it means that the machine is u
 \begin{verbatim}
 cpufreq-set -c 0 -f 1000MHz
 \end{verbatim}
+
+\section{Manipulating network interface bandwidth}
 
 \end{document}
