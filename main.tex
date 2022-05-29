@@ -1,5 +1,5 @@
 % TODO:
-% 1. Talk about the dataset sizes
+% 1. fix the conclusion section about the network results
 
 \documentclass[12pt]{article}
 
@@ -70,9 +70,21 @@ Intel Xeon D-1548 2.0 GHz processor (with hyperthreading
 enabled), 64 GB DRAM, a 256 GB NVMe drive, and a 10 GbE
 network interface. These bare-metal servers are codenamed
 “m510” in CloudLab. We used Ceph octopus v15.2.16 on Ubuntu 20.04 (Linux kernel 5.4.0-100-generic) along with Skyhook v0.4.0 for our experiments. We used Ceph clusters of size 1, 8, 16 for our experiments as these sizes are pretty common for a standard Ceph deployment. Every storage server had a single Ceph OSD running on the local NVMe drive. We configured the OSDs to use 8 threads to prevent any contention due to hyperthreading in the storage servers. The number of placement groups was increased from 128 to 512 to prevent contention from PG locking. A CephFS interface was created on a replicated data pool and was mounted in user mode using the ~\code{ceph-fuse} utility. We repeat each experiment $5$-$10$ times to produce somewhat statistically significant results. 
-
 \subsection{CPU Frequency}
-One of the goals of this paper is to find out the minimum amount of processing capability required per storage server CPU to be able to generate the same performance as a fast client side CPU can provide. We take Skyhook as our computational storage system and execute queries to select $1$\% of the rows both on the client and the server side. We use the ~\code{cpufrequtils} toolchain provided by Linux to change the CPU speed on the storage servers. We discuss how to use this tool in detail in Appendix~\ref{sec:app-cpu}. Since the lowest frequency that we can set our cores at was $800$ MHz, we performed our experiments in the frequency range of $800$ MHz and $2000$ MHz. We repeated this experiment on a Skyhook cluster of $1$, $8$, and $16$ storage servers respectively to find out how much CPU one can save per server by scaling out. We performed weak scaling by increasing our dataset size slowly from $460$ to $920$ files as we scaled out from $8$ to $16$ storage servers. For every cluster size, we start with a client side query execution with both the client and server side CPUs at $2000$ MHz. Then we perform a storage side query execution with both the sides still at $2000$ MHz. After that we slowly tune down the storage side CPU frequencies by a difference of $200$ MHz at each step and perform storage side query executions for each step. We repeat this till we find the query performance to match the client side query execution at $2000$ MHz on both sides. We observe that in a single server Skyhook cluster, we cannot use a low power CPU on the storage because there is only a single storage layer CPU to match the client CPU, so both their frequencies should be the same. On the other hand, when we have a cluster with $8$ and $16$ servers respectively, we can tune down the CPU frequencies to $1200$ MHz and $800$ MHz respectively and still get similar or better performance. Ideally, for the $16$ server cases, we should have been fine running the storage server CPUs at $600$ MHz but the kernel only allowed us to tune down the CPUs till $800$ MHz. Figure~\ref{fig:cpu} shows our observations for this experiment.
+
+\begin{figure}[htp]
+
+\centering
+\includegraphics[width=.63\textwidth]{figs/plot_1.pdf}\hfill
+\includegraphics[width=.63\textwidth]{figs/plot_8.pdf}\hfill
+\includegraphics[width=.63\textwidth]{figs/plot_16.pdf}
+
+\caption{Latency vs Storage server CPU frequency plot for a Skyhook (storage-side) query execution with $1$\% query selectivity. One exception is that, the leftmost bar (**) in every plot shows the latency of a client-side execution with a $2000$ MHz CPU serving as the baseline.}
+\label{fig:cpu}
+
+\end{figure}
+
+One of the goals of this paper is to find out the minimum amount of processing capability required per storage server CPU to be able to generate the same performance as a fast client side CPU can provide. We take Skyhook as our computational storage system and execute queries to select $1$\% of the rows both on the client and the server side. We use the ~\code{cpufrequtils} toolchain provided by Linux to change the CPU speed on the storage servers. We discuss how to use this tool in detail in Appendix~\ref{sec:app-cpu}. Since the lowest frequency that we can set our cores at was $800$ MHz, we performed our experiments in the frequency range of $800$ MHz and $2000$ MHz. We repeated this experiment on a Skyhook cluster of $1$, $8$, and $16$ storage servers respectively to find out how much CPU one can save per server by scaling out. We performed weak scaling by increasing our dataset size slowly from $460$ to $920$ files as we scaled out from $8$ to $16$ storage servers. Our dataset was comprised of replicated $64$MB uncompressed Parquet files containing data from the infamous NYC taxi dataset. Each file consisted of $2.6$ million rows and $17$ columns. For every cluster size, we start with a client side query execution with both the client and server side CPUs at $2000$ MHz. Then we perform a storage side query execution with both the sides still at $2000$ MHz. After that we slowly tune down the storage side CPU frequencies by a difference of $200$ MHz at each step and perform storage side query executions for each step. We repeat this till we find the query performance to match the client side query execution at $2000$ MHz on both sides. We observe that in a single server Skyhook cluster, we cannot use a low power CPU on the storage because there is only a single storage layer CPU to match the client CPU, so both their frequencies should be the same. On the other hand, when we have a cluster with $8$ and $16$ servers respectively, we can tune down the CPU frequencies to $1200$ MHz and $800$ MHz respectively and still get similar or better performance. Ideally, for the $16$ server cases, we should have been fine running the storage server CPUs at $600$ MHz but the kernel only allowed us to tune down the CPUs till $800$ MHz. Figure~\ref{fig:cpu} shows our observations for this experiment.
 
 \subsection{Network Bandwidth}
 
